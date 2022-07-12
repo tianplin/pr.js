@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <script src="./index.js"></script>
+  </head>
+  <body>
+    <div class="title"></div>
+
+    <script type="text/javascript">
+      //打印对象
+      function Print(dom, options) {
+        console.log(dom)
+
+        if (!(this instanceof Print)) return new Print(dom, options)
+
+        this.options = this.extends(
+          {
+            noPrint: '.no-print',
+          },
+          options
+        )
+        console.log('options', this.options)
+
+        if (typeof dom === 'string') {
+          dom = document.querySelector(dom)
+        } else {
+          //dom = dom instanceof HTMLElement ? dom : document.querySelector(dom)
+          this.dom = this.isDom(dom) ? dom : dom.$el
+          console.log(this.dom)
+        }
+
+        this.init()
+      }
+      //打印对象原型
+      Print.prototype = {
+        init() {
+          console.log('打印对象初始化')
+          var content = this.getStyle() + this.getHtml()
+          console.log(content)
+          this.writeIframe(content)
+        },
+        //对象合并
+        extends(obj, obj2) {
+          console.log('打印对象扩展')
+          for (var key in obj2) {
+            if (obj2.hasOwnProperty(key)) {
+              obj[key] = obj2[key]
+            }
+          }
+          return obj
+        },
+        getStyle() {
+          console.log('获取样式')
+          var str = ''
+          //把style标签的内容拼接到字符串中
+          styles = document.querySelectorAll('style', 'link')
+          for (var i = 0; i < styles.lenth; i++) {
+            str += styles[i].outerHTML
+          }
+          str += '<style>' + (this.options.noPrint ? this.options.noPrint : '.no-print') + '{display:none;}</style>'
+          return str
+        },
+        getHtml() {
+          console.log('获取html')
+          //把canvas转换成图片
+          var canvasList = document.querySelectorAll('canvas')
+          for (var i = 0; i < canvasList.length; i++) {
+            var image = canvasList[i].toDataURL('image/png')
+            canvasList[i].getContext('2d').drawImage(image, 0, 0)
+            //canvasList[i].parentNode.innerHTML = '<img src="' + image + '" />'
+          }
+          //返回html
+          return this.dom.outerHTML
+        },
+        isDom(dom) {
+          console.log('是否是dom')
+          return typeof HTMLElement === 'object' ? dom instanceof HTMLElement : dom instanceof Element
+        },
+        //写入iframe
+        writeIframe(content) {
+          console.log('写入iframe')
+          var win //window对象
+          var doc //文档对象
+          var iframe = document.createElement('iframe') //创建iframe
+          iframe.id = 'iframe' //设置id
+          iframe.style.display = 'none' //设置display
+
+          var fHtml = document.body.appendChild(iframe) //添加到页面中 并返回iframe对象
+          win = fHtml.contentWindow //获取iframe中的window对象
+          doc = fHtml.contentDocument || fHtml.contentWindow.document //获取iframe中的document对象
+          doc.open() //打开文档
+          doc.write(content) //写入文档
+          doc.close() //关闭文档
+          var _this = this
+          iframe.onload = function () {
+            console.log('iframe加载完成')
+            _this.print(win)
+            setTimeout(function () {
+              document.body.removeChild(iframe)
+            }, 100)
+          }
+        },
+        toPrint(frameWindow) {
+          console.log('打印')
+          try {
+            frameWindow.print()
+          } catch (e) {
+            console.log('print error', e)
+          }
+        },
+      }
+
+      /******************************/
+      new Print(document.getElementsByClassName('title')[0])
+    </script>
+  </body>
+</html>
