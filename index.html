@@ -9,7 +9,8 @@
     <script src="./index.js"></script>
   </head>
   <body>
-    <div class="title"></div>
+    <button onclick="handlePrint()">打印</button>
+    <div class="title">11111</div>
 
     <script type="text/javascript">
       //打印对象
@@ -88,18 +89,29 @@
           var doc //文档对象
           var iframe = document.createElement('iframe') //创建iframe
           iframe.id = 'iframe' //设置id
-          iframe.style.display = 'none' //设置display
+          //  iframe.style.display = 'none' //设置display
 
           var fHtml = document.body.appendChild(iframe) //添加到页面中 并返回iframe对象
           win = fHtml.contentWindow //获取iframe中的window对象
+          console.log(win)
           doc = fHtml.contentDocument || fHtml.contentWindow.document //获取iframe中的document对象
+          console.log(doc)
           doc.open() //打开文档
           doc.write(content) //写入文档
-          doc.close() //关闭文档
+
+          /**
+           *
+           *该方法将关闭open()方法打开的文档流，并强制地显示出所有缓存的输出内容。
+           *如果您使用write()方法动态地输出一个文档，必须记住当你这么做的时候要调用close()方法，
+           *以确保所有文档内容都能显示。
+           */
+
+          doc.close() //关闭文档 并显示文档流
+
           var _this = this
           iframe.onload = function () {
             console.log('iframe加载完成')
-            _this.print(win)
+            _this.toPrint(win)
             setTimeout(function () {
               document.body.removeChild(iframe)
             }, 100)
@@ -109,6 +121,18 @@
           console.log('打印')
           try {
             frameWindow.print()
+            setTimeout(function () {
+              frameWindow.focus()
+              try {
+                //execCommand方法是执行一个对当前文档，当前选择或者给出范围的命令。
+                if (!frameWindow.document.execCommand('print', false, null)) {
+                  frameWindow.print()
+                } //执行打印
+              } catch (e) {
+                frameWindow.print()
+              }
+              frameWindow.close()
+            }, 10)
           } catch (e) {
             console.log('print error', e)
           }
@@ -116,7 +140,11 @@
       }
 
       /******************************/
-      new Print(document.getElementsByClassName('title')[0])
+
+      function handlePrint() {
+        console.log('打印')
+        new Print(document.getElementsByClassName('title')[0])
+      }
     </script>
   </body>
 </html>
